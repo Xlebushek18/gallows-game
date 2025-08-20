@@ -9,86 +9,76 @@ import { ref, watch } from 'vue'
 import { useRandomWord } from './composables/useRandomWord'
 import { useLetters } from './composables/useLetters'
 
-const {word, getRandomWord} = useRandomWord()
-const {letters, correctLetters, wrongLetters,isLose, isWin} = useLetters(word)
+const { word, getRandomWord } = useRandomWord()
+const { letters, correctLetters, wrongLetters, isLose, isWin } = useLetters(word)
 
 const notification = ref<InstanceType<typeof GameNotification> | null>(null)
 const popup = ref<InstanceType<typeof GamePopup> | null>(null)
 
+// Следим за победой/поражением
 watch(wrongLetters, () => {
-  if (isLose.value) {
-    popup.value?.open('lose')
-  }
+  if (isLose.value) popup.value?.open('lose')
 })
 
-watch (correctLetters, () => {
-  if (isWin.value){
-    popup.value?.open('win')
-  }
+watch(correctLetters, () => {
+  if (isWin.value) popup.value?.open('win')
 })
 
-window.addEventListener('keydown', ({ key }) => {
-  if (isLose.value || isWin.value) {
-    return
-  }
-  if (letters.value.includes(key)) {
-    notification.value?.open();
-    setTimeout(() => notification.value?.close(), 2000)
-    return
-  }
+// Ссылка на скрытое поле
+const hiddenInput = ref<HTMLInputElement | null>(null)
 
-  if(/[А-Яа-яЁё]/.test(key)) {
-    letters.value.push(key.toLowerCase())
-  }
-})
-
+// Обработчик ввода буквы
 const handleInput = (event: Event) => {
   const input = event.target as HTMLInputElement
   const key = input.value.trim().toLowerCase()
   if (!key) return
+
   if (letters.value.includes(key)) {
     notification.value?.open()
     setTimeout(() => notification.value?.close(), 2000)
   } else if (/[а-яё]/i.test(key)) {
     letters.value.push(key)
   }
+
   input.value = '' // очищаем поле после ввода
 }
 
+// Перезапуск игры
 const restart = async () => {
-   await getRandomWord()
-   letters.value = []
-   popup.value?.close()
+  await getRandomWord()
+  letters.value = []
+  popup.value?.close()
 }
 
+// Фокус на поле при клике на экран
+const focusInput = () => {
+  hiddenInput.value?.focus()
+}
 </script>
 
 <template>
-  <div id="app">
+  <div id="app" @click="focusInput" style="min-height:100vh;">
     <GameHeader />
+
     <div class="game-container">
-      <GameFigure :wrong-letters-count="wrongLetters.length"/>
-
-      <GameWrongLetters :wrong-letters="wrongLetters"/>
-
-      <GameWord :word="word" :correct-letters="correctLetters"/>
+      <GameFigure :wrong-letters-count="wrongLetters.length" />
+      <GameWrongLetters :wrong-letters="wrongLetters" />
+      <GameWord :word="word" :correct-letters="correctLetters" />
     </div>
 
-    <!-- Встроенное поле для ввода с клавиатурой устройства -->
+    <!-- Скрытое поле для ввода с нативной клавиатурой -->
     <input
+      ref="hiddenInput"
       type="text"
       maxlength="1"
-      autofocus
       @input="handleInput"
-      placeholder="Нажмите здесь, чтобы ввести букву"
-      style="opacity:0; position:absolute; top:0; left:0; width:1px; height:1px;"
+      style="opacity:0; position:absolute; top:-100px; left:0; width:1px; height:1px;"
     />
 
     <!-- Итоговое сообщение -->
     <GamePopup ref="popup" :word="word" @restart="restart" />
 
     <!-- Уведомление -->
-   <GameNotification ref="notification"/>
-
+    <GameNotification ref="notification" />
   </div>
 </template>
