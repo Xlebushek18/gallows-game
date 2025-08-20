@@ -48,6 +48,21 @@ const restart = async () => {
    popup.value?.close()
 }
 
+const handleLetter = (key: string) => {
+  if (isLose.value || isWin.value) {
+    return
+  }
+  if (letters.value.includes(key)) {
+    notification.value?.open();
+    setTimeout(() => notification.value?.close(), 2000)
+    return
+  }
+
+  if(/[А-Яа-яЁё]/.test(key)) {
+    letters.value.push(key.toLowerCase())
+  }
+}
+
 </script>
 
 <template>
@@ -60,6 +75,9 @@ const restart = async () => {
 
       <GameWord :word="word" :correct-letters="correctLetters"/>
     </div>
+
+    <!-- Экранная клавиатура (для телефонов) -->
+    <GameKeyboard @select="handleLetter" />
 
     <!-- Итоговое сообщение -->
     <GamePopup ref="popup" :word="word" @restart="restart" />
