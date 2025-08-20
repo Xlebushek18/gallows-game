@@ -5,7 +5,6 @@ import GamePopup from './components/GamePopup.vue'
 import GameWord from './components/GameWord.vue'
 import GameWrongLetters from './components/GameWrongLetters.vue'
 import GameNotification from './components/GameNotification.vue'
-import GameKeyboard from './components/GameKeyboard.vue'
 import { ref, watch } from 'vue'
 import { useRandomWord } from './composables/useRandomWord'
 import { useLetters } from './composables/useLetters'
@@ -43,25 +42,23 @@ window.addEventListener('keydown', ({ key }) => {
   }
 })
 
+const handleInput = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const key = input.value.trim().toLowerCase()
+  if (!key) return
+  if (letters.value.includes(key)) {
+    notification.value?.open()
+    setTimeout(() => notification.value?.close(), 2000)
+  } else if (/[а-яё]/i.test(key)) {
+    letters.value.push(key)
+  }
+  input.value = '' // очищаем поле после ввода
+}
+
 const restart = async () => {
    await getRandomWord()
    letters.value = []
    popup.value?.close()
-}
-
-const handleLetter = (key: string) => {
-  if (isLose.value || isWin.value) {
-    return
-  }
-  if (letters.value.includes(key)) {
-    notification.value?.open();
-    setTimeout(() => notification.value?.close(), 2000)
-    return
-  }
-
-  if(/[А-Яа-яЁё]/.test(key)) {
-    letters.value.push(key.toLowerCase())
-  }
 }
 
 </script>
@@ -77,8 +74,15 @@ const handleLetter = (key: string) => {
       <GameWord :word="word" :correct-letters="correctLetters"/>
     </div>
 
-    <!-- Экранная клавиатура (для телефонов) -->
-    <GameKeyboard @select="handleLetter" />
+    <!-- Встроенное поле для ввода с клавиатурой устройства -->
+    <input
+      type="text"
+      maxlength="1"
+      autofocus
+      @input="handleInput"
+      placeholder="Нажмите здесь, чтобы ввести букву"
+      style="opacity:0; position:absolute; top:0; left:0; width:1px; height:1px;"
+    />
 
     <!-- Итоговое сообщение -->
     <GamePopup ref="popup" :word="word" @restart="restart" />
