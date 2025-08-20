@@ -5,7 +5,7 @@ import GamePopup from './components/GamePopup.vue'
 import GameWord from './components/GameWord.vue'
 import GameWrongLetters from './components/GameWrongLetters.vue'
 import GameNotification from './components/GameNotification.vue'
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRandomWord } from './composables/useRandomWord'
 import { useLetters } from './composables/useLetters'
 
@@ -19,28 +19,40 @@ const popup = ref<InstanceType<typeof GamePopup> | null>(null)
 watch(wrongLetters, () => {
   if (isLose.value) popup.value?.open('lose')
 })
-
 watch(correctLetters, () => {
   if (isWin.value) popup.value?.open('win')
 })
 
-// Ссылка на скрытое поле
+// Ссылка на скрытое поле для мобильных
 const hiddenInput = ref<HTMLInputElement | null>(null)
 
-// Обработчик ввода буквы
+// Обработка ввода через нативное поле (мобильные устройства)
 const handleInput = (event: Event) => {
   const input = event.target as HTMLInputElement
   const key = input.value.trim().toLowerCase()
   if (!key) return
+  processLetter(key)
+  input.value = ''
+}
+
+// Общий обработчик буквы
+const processLetter = (key: string) => {
+  if (isLose.value || isWin.value) return
 
   if (letters.value.includes(key)) {
     notification.value?.open()
     setTimeout(() => notification.value?.close(), 2000)
-  } else if (/[а-яё]/i.test(key)) {
-    letters.value.push(key)
+    return
   }
 
-  input.value = '' // очищаем поле после ввода
+  if (/[а-яё]/i.test(key)) {
+    letters.value.push(key)
+  }
+}
+
+// Обработка клавиш с ПК
+const handleKeydown = (event: KeyboardEvent) => {
+  processLetter(event.key.toLowerCase())
 }
 
 // Перезапуск игры
@@ -50,10 +62,18 @@ const restart = async () => {
   popup.value?.close()
 }
 
-// Фокус на поле при клике на экран
+// Фокус на поле при клике на мобильных
 const focusInput = () => {
   hiddenInput.value?.focus()
 }
+
+// Подписываемся на событие клавиатуры
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
 </script>
 
 <template>
@@ -66,7 +86,7 @@ const focusInput = () => {
       <GameWord :word="word" :correct-letters="correctLetters" />
     </div>
 
-    <!-- Скрытое поле для ввода с нативной клавиатурой -->
+    <!-- Скрытое поле для мобильных -->
     <input
       ref="hiddenInput"
       type="text"
