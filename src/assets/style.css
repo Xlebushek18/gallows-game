@@ -52,7 +52,7 @@ h1 {
   text-align: right;
   flex-wrap: wrap;
   justify-content: flex-end;
-  max-width: 100px;
+  max-width: 90px;
 }
 
 .wrong-letters-container p {
