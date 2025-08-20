@@ -1,6 +1,7 @@
 # Игра Виселица - угадай имя
 
-Учебный проект на Vue 3 (Composition API) и TypeScript. [(Демонстрация игры)]([https://hangman-orcin.vercel.app/](https://github.com/Xlebushek18/gallows-game))
+Учебный проект на Vue 3 (Composition API) и TypeScript. [(Демонстрация игры)](https://xlebushek18.github.io/gallows-game/)
+
 
 ## Стек
 
@@ -9,4 +10,5 @@
 - HTML
 - CSS
 - Axios
+
 
